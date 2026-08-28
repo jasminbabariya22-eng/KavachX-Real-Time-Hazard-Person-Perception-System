@@ -1,16 +1,12 @@
 # KavachX — Real-Time Hazard & Person Perception System
 ## Comprehensive Technical Assessment & Production Engineering Manual
 
-**System Identity:** KavachX Industrial Edge Perception Appliance  
-**Primary Author / Engineer:** Jasmin Babariya (`Jasminbabariya48`)  
 **Target Hardware Platform:** Qualcomm QCS6490 SoC (Radxa Dragon Q6490 / Kavach-EdgeBox)  
 **Neural Hardware Accelerator:** Qualcomm Hexagon v68 HTP (Hexagon Tensor Processor) DSP  
 **Device Driver & Kernel Transport:** Qualcomm FastRPC (`/dev/fastrpc-cdsp`, GID `993` `render`)  
 **Runtime Environment:** Linux 6.6 ARM64 (`aarch64-linux-gnu`) | QAIRT / QNN SDK 2.47.0.260601  
 **Production Model Binary:** `models/production/3class_calibrated_final.bin` ($26.8\text{ MB}$, Symmetric INT8)  
 **Context Binary Checksum:** `b7868a8c436fcf723fea7f95b3dcfd6f131fbe8ddb02ddf103addbe351dafabc`  
-**Repository URL:** [https://github.com/jasminbabariya22-eng/KavachX-Real-Time-Hazard-Person-Perception-System](https://github.com/jasminbabariya22-eng/KavachX-Real-Time-Hazard-Person-Perception-System)  
-**Verification Verdict:** **100% Complete, Validated on Target Hardware & Production Ready**
 
 ---
 
@@ -590,13 +586,13 @@ In industrial edge safety monitoring, if ingestion throughput ($30\text{ FPS}$) 
 flowchart TD
     DET["Raw Detections from NMS"] --> CONF_FILTER{"Confidence >= 0.25?"}
     
-    CONF_FILTER -->|No| DROP["Discard Low-Confidence Detection"]
-    CONF_FILTER -->|Yes| MAP_CLS["Map Category:\n- Class 0 -> FIRE\n- Class 1 -> SMOKE\n- Class 2 -> PERSON"]
+    CONF_FILTER -->|"No"| DROP["Discard Low-Confidence Detection"]
+    CONF_FILTER -->|"Yes"| MAP_CLS["Map Category:<br/>- Class 0 -> FIRE<br/>- Class 1 -> SMOKE<br/>- Class 2 -> PERSON"]
     
     MAP_CLS --> DEBOUNCE{"Time since last event > 3.0s?"}
     
-    DEBOUNCE -->|No (Cooldown Active)| SUPPRESS["Update Tracking State\n(Suppress Duplicate Alarm)"]
-    DEBOUNCE -->|Yes| DISPATCH["Dispatch Alert Event:\n- FIRE -> Severity: CRITICAL\n- SMOKE -> Severity: WARNING\n- PERSON -> Severity: WARNING"]
+    DEBOUNCE -->|"No (Cooldown Active)"| SUPPRESS["Update Tracking State<br/>(Suppress Duplicate Alarm)"]
+    DEBOUNCE -->|"Yes"| DISPATCH["Dispatch Alert Event:<br/>- FIRE -> Severity: CRITICAL<br/>- SMOKE -> Severity: WARNING<br/>- PERSON -> Severity: WARNING"]
 ```
 
 ---
@@ -631,13 +627,13 @@ flowchart TD
 flowchart TD
     FAILURE["Failure Event Detected"] --> CLASSIFY{"Failure Type"}
 
-    CLASSIFY -->|Camera Disconnect| CAM_REC["RTSPSource / V4L2\n- Trigger exponential backoff\n- Attempt reconnect (1s, 2s, 4s)\n- Worker daemon remains unaffected"]
+    CLASSIFY -->|"Camera Disconnect"| CAM_REC["RTSPSource / V4L2<br/>- Trigger exponential backoff<br/>- Attempt reconnect (1s, 2s, 4s)<br/>- Worker daemon unaffected"]
     
-    CLASSIFY -->|Worker Process Killed| WRK_REC["Service Supervisor\n- Detect dead PID\n- Unlink stale /tmp/kawach_worker.sock\n- Re-launch kawach_worker binary\n- Health endpoint updated to READY"]
+    CLASSIFY -->|"Worker Process Killed"| WRK_REC["Service Supervisor<br/>- Detect dead PID<br/>- Unlink stale socket<br/>- Re-launch kawach_worker binary<br/>- Health state -> READY"]
     
-    CLASSIFY -->|Oversized Request| IPC_REC["Native C++ Worker\n- Reject payload > 2 MB\n- Return status 1 (REJECTED)\n- Keep socket open for next request"]
+    CLASSIFY -->|"Oversized Request"| IPC_REC["Native C++ Worker<br/>- Reject payload > 2 MB<br/>- Return status 1 (REJECTED)<br/>- Keep socket open for next request"]
     
-    CLASSIFY -->|Backpressure Burst| Q_REC["BoundedQueue (maxsize=2)\n- Evict oldest unread frame\n- Accept freshest incoming frame\n- Zero latency backlog buildup"]
+    CLASSIFY -->|"Backpressure Burst"| Q_REC["BoundedQueue (maxsize=2)<br/>- Evict oldest unread frame<br/>- Accept freshest incoming frame<br/>- Zero latency backlog buildup"]
 ```
 
 ---

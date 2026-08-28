@@ -5,6 +5,7 @@ Welcome to the technical documentation portal for **KavachX**, an enterprise edg
 ---
 
 ## 1. Quick Navigation & Walkthrough
+- [**FULL COMPLETE PROJECT DOCUMENTATION (All-in-One Markdown)**](FULL_PROJECT_DOCUMENTATION.md) — Exhaustive monolithic technical documentation containing every single diagram, tensor specification, architecture, benchmark, and runbook.
 - [**Getting Started Guide**](GETTING_STARTED.md) — 5-minute technical orientation for new engineers.
 - [**Technical Assessment & Deployment Report**](TECHNICAL_ASSESSMENT_REPORT.md) — Reviewer-facing comprehensive assessment report.
 

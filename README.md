@@ -1,6 +1,6 @@
 # KavachX — Real-Time Hazard & Person Perception System
 
-KavachX is an industrial edge-perception system for real-time detection of **Fire, Smoke, and Persons**, hardware-accelerated on the **Qualcomm Hexagon v68 HTP DSP** on the Qualcomm QCS6490 SoC (Radxa Dragon Q6490 / Kavach-EdgeBox).
+KavachX is an enterprise edge perception system for real-time detection of **Fire, Smoke, and Persons**, hardware-accelerated on the **Qualcomm Hexagon v68 HTP DSP** on the Qualcomm QCS6490 SoC (Radxa Dragon Q6490 / Kavach-EdgeBox).
 
 ---
 
@@ -11,8 +11,8 @@ KavachX is an industrial edge-perception system for real-time detection of **Fir
 - **Model Signature:** [`models/production/3class_calibrated_final.bin`](models/production/3class_calibrated_final.bin) (26.8 MB, SHA256: `b7868a8c436fcf723fea7f95b3dcfd6f131fbe8ddb02ddf103addbe351dafabc`).
 - **Hardware Acceleration:** **100% Neural Network on Hexagon DSP** via FastRPC (`/dev/fastrpc-cdsp`) with **0 CPU/GPU fallback**.
 - **Performance:**
-  - **Raw NPU Inference Latency:** $\sim 30\text{ ms}$ ($\sim 33.2\text{ FPS}$).
-  - **End-to-End Live Stream Latency:** $\sim 45\text{--}70\text{ ms}$ ($\sim 13.5\text{--}15\text{ FPS}$) including capture, letterboxing, NPU execution, DFL decoding, NMS, and debounced alert dispatching.
+  - **Raw NPU Inference Latency:** $\sim 30.14\text{ ms}$ ($\sim 33.2\text{ FPS}$).
+  - **End-to-End Live Stream Pipeline:** $\sim 61.91\text{ ms}$ ($\sim 13.9\text{ FPS}$) including capture, letterboxing, NPU execution, DFL decoding, NMS, and debounced alert dispatching.
 - **Target Classes:** `fire` (CRITICAL), `smoke` (WARNING), `person` (WARNING).
 
 ---
@@ -24,7 +24,7 @@ KavachX is an industrial edge-perception system for real-time detection of **Fir
 │  Camera Ingestion Layer (src/kavachx/capture/)                         │
 │  - V4L2 Physical USB/CSI Camera (/dev/video0)                          │
 │  - Network RTSP IP Camera (rtsp://...)                                 │
-│  - Continuous Video Stream (test_images/live_test_stream.mp4)          │
+│  - Continuous Video Stream (test_data/videos/live_test_stream.mp4)      │
 └──────────────────────────────────┬─────────────────────────────────────┘
                                    │
                                    ▼
@@ -52,6 +52,7 @@ KavachX is an industrial edge-perception system for real-time detection of **Fir
                                    ▼
 ┌────────────────────────────────────────────────────────────────────────┐
 │  DFL Box Decoding & NMS (src/kavachx/inference/decoder.py)             │
+│  - Vectorized expectation over 16 DFL bins per coordinate              │
 │  - Unletterboxes coordinates to original camera resolution             │
 │  - Extracts bounding boxes [x1, y1, x2, y2] + confidence scores        │
 └──────────────────────────────────┬─────────────────────────────────────┘
@@ -59,7 +60,7 @@ KavachX is an industrial edge-perception system for real-time detection of **Fir
                                    ▼
 ┌────────────────────────────────────────────────────────────────────────┐
 │  Alert & Event Manager (src/kavachx/pipeline/events.py)                │
-│  - Debounced event dispatching (prevents alert storms)                 │
+│  - Debounced event dispatching (cooldown = 3.0s)                       │
 │  - HAZARD_DETECTED (Fire: CRITICAL, Smoke: WARNING)                    │
 │  - PERSON_DETECTED (Person: WARNING)                                   │
 └────────────────────────────────────────────────────────────────────────┘
@@ -119,50 +120,39 @@ make test
 
 ---
 
-## 4. Camera Ingestion Configuration
+## 4. Technical Documentation Package
 
-Edit [`config/production.json`](config/production.json) to switch between physical cameras, RTSP streams, or test feeds:
+Complete technical documentation is organized in the [`docs/`](docs/) directory:
 
-### 1. Physical USB or CSI Camera (`/dev/video0`)
-```json
-{
-  "stream": {
-    "source_type": "camera",
-    "source": "/dev/video0",
-    "width": 1280,
-    "height": 720,
-    "target_fps": 30.0,
-    "queue_maxsize": 2
-  }
-}
-```
-
-### 2. Network RTSP Security IP Camera
-```json
-{
-  "stream": {
-    "source_type": "rtsp",
-    "source": "rtsp://admin:password@192.168.1.100:554/live",
-    "reconnect_backoff_sec": 1.0,
-    "max_reconnect_attempts": 5,
-    "target_fps": 30.0,
-    "queue_maxsize": 2
-  }
-}
-```
-
-### 3. Continuous Video Stream Feed
-```json
-{
-  "stream": {
-    "source_type": "video",
-    "source": "test_data/videos/live_test_stream.mp4",
-    "capture_fps": 30.0,
-    "loop": true,
-    "queue_maxsize": 2
-  }
-}
-```
+| Domain | Documentation File | Description |
+| :--- | :--- | :--- |
+| **Architecture** | [`docs/architecture/SYSTEM_ARCHITECTURE.md`](docs/architecture/SYSTEM_ARCHITECTURE.md) | High-level architecture, boundaries, and data flow. |
+| | [`docs/architecture/COMPONENTS.md`](docs/architecture/COMPONENTS.md) | Component responsibilities, inputs, and outputs. |
+| | [`docs/architecture/DATA_FLOW.md`](docs/architecture/DATA_FLOW.md) | End-to-end frame transformations and tensor formats. |
+| | [`docs/architecture/PROCESS_AND_THREADING.md`](docs/architecture/PROCESS_AND_THREADING.md) | Multi-threading model and IPC synchronization. |
+| **Model & NPU** | [`docs/model/MODEL_OVERVIEW.md`](docs/model/MODEL_OVERVIEW.md) | YOLOv8 architecture, tensor shapes, and split head design. |
+| | [`docs/model/QUANTIZATION.md`](docs/model/QUANTIZATION.md) | Symmetric INT8 quantization and QNN context binary compilation. |
+| | [`docs/model/HTP_ACCELERATION.md`](docs/model/HTP_ACCELERATION.md) | Qualcomm Hexagon v68 HTP DSP FastRPC execution. |
+| | [`docs/model/DFL_AND_POSTPROCESSING.md`](docs/model/DFL_AND_POSTPROCESSING.md) | DFL coordinate decoding and coordinate unletterboxing. |
+| | [`docs/model/NUMERICAL_VALIDATION.md`](docs/model/NUMERICAL_VALIDATION.md) | Empirical accuracy and numerical parity vs. FP32 reference. |
+| **Streaming** | [`docs/streaming/STREAMING_PIPELINE.md`](docs/streaming/STREAMING_PIPELINE.md) | Bounded drop queue and latest-frame-wins drop policy. |
+| | [`docs/streaming/CAMERA_INTEGRATION.md`](docs/streaming/CAMERA_INTEGRATION.md) | Physical USB/CSI (`/dev/video0`), RTSP, and Video stream setup. |
+| | [`docs/streaming/IPC_PROTOCOL.md`](docs/streaming/IPC_PROTOCOL.md) | Binary framing specification (`0x4B574158` / `0x5841574B`). |
+| **Deployment** | [`docs/deployment/DEPLOYMENT_GUIDE.md`](docs/deployment/DEPLOYMENT_GUIDE.md) | Turnkey installation, user permissions, and service setup. |
+| | [`docs/deployment/PRODUCTION_CONFIGURATION.md`](docs/deployment/PRODUCTION_CONFIGURATION.md) | Centralized runtime configuration (`config/production.json`). |
+| **Testing** | [`docs/testing/TEST_STRATEGY.md`](docs/testing/TEST_STRATEGY.md) | Multi-tier validation strategy across hardware, integration, and streaming. |
+| | [`docs/testing/TESTING_AND_VALIDATION.md`](docs/testing/TESTING_AND_VALIDATION.md) | Automated regression test results and recovery verification. |
+| | [`docs/testing/PERFORMANCE.md`](docs/testing/PERFORMANCE.md) | Latency, throughput, and memory characterization on hardware. |
+| | [`docs/testing/RELIABILITY_AND_FAILURE_RECOVERY.md`](docs/testing/RELIABILITY_AND_FAILURE_RECOVERY.md) | Process isolation, worker self-healing, and memory stability. |
+| **Operations** | [`docs/operations/OPERATIONS_RUNBOOK.md`](docs/operations/OPERATIONS_RUNBOOK.md) | Production operations manual (start, stop, restart, status, logs). |
+| | [`docs/operations/HEALTH_AND_MONITORING.md`](docs/operations/HEALTH_AND_MONITORING.md) | JSON health monitoring endpoint (`/tmp/kawach_health.json`). |
+| **Assignment** | [`docs/assignment/ASSIGNMENT_COVERAGE.md`](docs/assignment/ASSIGNMENT_COVERAGE.md) | 100% compliance mapping against assessment instructions. |
+| | [`docs/assignment/SUBMISSION_GUIDE.md`](docs/assignment/SUBMISSION_GUIDE.md) | Evaluator quickstart guide. |
+| **Audits** | [`docs/audit/REPOSITORY_AUDIT.md`](docs/audit/REPOSITORY_AUDIT.md) | Complete codebase inventory and component mapping. |
+| | [`docs/audit/ASSIGNMENT_REQUIREMENTS.md`](docs/audit/ASSIGNMENT_REQUIREMENTS.md) | Extracted requirements matrix. |
+| | [`docs/audit/EVIDENCE_MATRIX.md`](docs/audit/EVIDENCE_MATRIX.md) | Traceability matrix linking code, tests, and evidence. |
+| | [`docs/audit/CLAIMS_AND_EVIDENCE.md`](docs/audit/CLAIMS_AND_EVIDENCE.md) | Empirical evidence supporting all performance claims. |
+| | [`docs/audit/DOCUMENTATION_FINAL_AUDIT.md`](docs/audit/DOCUMENTATION_FINAL_AUDIT.md) | Final consistency and integrity audit report. |
 
 ---
 
@@ -227,51 +217,13 @@ KavachX/
 │   ├── service_manager.py             # Service supervisor (start, stop, restart, status)
 │   └── target_runner.py               # Remote execution & validation driver
 │
-├── docs/                              # Product Technical Documentation
-│   ├── README.md                      # Documentation index
-│   ├── architecture/                  # SYSTEM_ARCHITECTURE.md
-│   ├── deployment/                    # DEPLOYMENT_GUIDE.md, CAMERA_SETUP.md, GO_LIVE_GUIDE.md
-│   ├── operations/                    # OPERATIONS_RUNBOOK.md, HEALTH_AND_MONITORING.md, TROUBLESHOOTING.md
-│   ├── testing/                       # TEST_STRATEGY.md, ACCEPTANCE_TESTS.md, PERFORMANCE_TESTING.md
-│   ├── development/                   # DEVELOPMENT_GUIDE.md, REPOSITORY_ARCHITECTURE.md, CONTRIBUTING.md
-│   └── handover/                      # PRODUCTION_HANDOVER.md, PROJECT_STATUS.md, REPOSITORY_CLEANUP_REPORT.md
-│
+├── docs/                              # Product Technical Documentation (28+ manuals)
 ├── reports/                           # Archived Verification Reports
-│   ├── acceptance/
-│   ├── performance/
-│   ├── reliability/
-│   └── audit/
-│
 ├── test_data/                         # Verification Media (images/ & videos/)
-│
 └── archive/                           # Preserved Historical Development Milestones
-    ├── experiments/
-    ├── migration/
-    └── legacy/
 ```
 
 ---
 
-## 6. Real Live Stream Verification Output
-
-```text
-==================================================================
-  KAVACHX REAL-TIME CAMERA INFERENCE (Qualcomm Hexagon v68 HTP DSP)
-==================================================================
-Frame #01 | DSP Latency: 48.89 ms | Detections: SMOKE (39.1%) [544,413,616,456], PERSON (60.9%) [660,20,986,412] 🚨 [WARNING: HAZARD_DETECTED - SMOKE]
-Frame #02 | DSP Latency: 39.56 ms | Detections: SMOKE (39.1%) [543,412,616,455], PERSON (60.9%) [412,129,689,429]
-Frame #03 | DSP Latency: 69.14 ms | Detections: SMOKE (39.1%) [543,412,616,454], PERSON (60.9%) [411,131,689,437]
-Frame #04 | DSP Latency: 44.84 ms | Detections: SMOKE (39.1%) [543,412,616,454], PERSON (60.9%) [411,133,687,435]
-Frame #05 | DSP Latency: 71.38 ms | Detections: SMOKE (39.1%) [543,412,616,454], PERSON (60.9%) [413,135,685,430]
-==================================================================
-  Live camera stream finished successfully.
-==================================================================
-```
-
----
-
-## 7. License
+## 6. License
 Apache License 2.0. Copyright (c) 2026 KavachX Team.
-#   K a v a c h X - R e a l - T i m e - H a z a r d - P e r s o n - P e r c e p t i o n - S y s t e m  
- #   K a v a c h X - R e a l - T i m e - H a z a r d - P e r s o n - P e r c e p t i o n - S y s t e m  
- 

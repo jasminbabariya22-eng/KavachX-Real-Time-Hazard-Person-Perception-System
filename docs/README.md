@@ -1,82 +1,86 @@
 # KavachX — Master Technical Documentation Suite
 
-Welcome to the technical documentation for **KavachX**, an enterprise edge perception system hardware-accelerated on the **Qualcomm Hexagon v68 HTP DSP** on the Qualcomm QCS6490 SoC.
+Welcome to the technical documentation portal for **KavachX**, an enterprise edge perception system hardware-accelerated on the **Qualcomm Hexagon v68 HTP DSP** on the Qualcomm QCS6490 SoC.
 
 ---
 
 ## 1. Quick Navigation & Walkthrough
 - [**Getting Started Guide**](GETTING_STARTED.md) — 5-minute technical orientation for new engineers.
-- [**Technical Assessment & Deployment Report**](TECHNICAL_ASSESSMENT_REPORT.md) — Executive summary and reviewer-facing submission report.
+- [**Technical Assessment & Deployment Report**](TECHNICAL_ASSESSMENT_REPORT.md) — Reviewer-facing comprehensive assessment report.
 
 ---
 
-## 2. Architecture & Design
-- [**System Architecture**](architecture/SYSTEM_ARCHITECTURE.md) — High-level architecture, end-to-end dataflow, and boundary definitions.
-- [**Technology Stack Specification**](architecture/TECHNOLOGY_STACK.md) — Comprehensive verified hardware, runtime, and software stack.
-- [**Repository Architecture**](architecture/REPOSITORY_ARCHITECTURE.md) — Production, test, tooling, and archive classification.
-- [**Process Architecture**](architecture/PROCESS_ARCHITECTURE.md) — Multi-process isolation, threads, and FastRPC lifecycle.
-- [**Engineering Decisions Log**](architecture/ENGINEERING_DECISIONS.md) — Architectural trade-offs and decision rationale.
-- [**Component Responsibilities**](architecture/COMPONENTS.md) — Component inputs, outputs, and failure boundaries.
+## 2. Architecture & System Design
+- [**System Overview**](architecture/SYSTEM_OVERVIEW.md) — Complete system architecture, dataflow, and boundaries.
+- [**Component Architecture**](architecture/COMPONENT_ARCHITECTURE.md) — Component responsibilities, inputs, and outputs.
 - [**End-to-End Data Flow**](architecture/DATA_FLOW.md) — Frame transformations from camera capture to alert dispatch.
-- [**Threading Model**](architecture/PROCESS_AND_THREADING.md) — Ingestion and inference synchronization model.
+- [**Runtime Architecture**](architecture/RUNTIME_ARCHITECTURE.md) — Python $\to$ IPC $\to$ C++ $\to$ QNN $\to$ HTP execution path.
+- [**Technology Stack Specification**](architecture/TECHNOLOGY_STACK.md) — Comprehensive verified hardware, runtime, and software stack.
+- [**Process Architecture**](architecture/PROCESS_ARCHITECTURE.md) — Multi-process layout, threads, and memory isolation.
+- [**Engineering Decisions Log**](architecture/ENGINEERING_DECISIONS.md) — Architectural trade-offs and decision rationale.
 
 ---
 
 ## 3. Machine Learning & Qualcomm NPU Acceleration
-- [**Model Architecture & Tensors**](model/MODEL_ARCHITECTURE.md) — Visual YOLOv8 model flow and static tensor contracts.
-- [**Model Visual Summary**](model/MODEL_SUMMARY.md) — Quick reference properties and checksums.
-- [**Graph Splitting Rationale**](model/GRAPH_SPLITTING.md) — Resolution of the dynamic DFL slice compiler blocker.
-- [**HTP vs. CPU Execution Boundary**](model/HTP_EXECUTION.md) — Visual breakdown of DSP neural execution vs. host CPU math.
-- [**INT8 Quantization & Calibration**](model/QUANTIZATION.md) — Symmetric INT8 calibration and QNN context generation.
-- [**Qualcomm Hexagon HTP Acceleration**](model/HTP_ACCELERATION.md) — FastRPC transport (`/dev/fastrpc-cdsp`) and zero CPU fallback.
+- [**Model Overview & Specifications**](model/MODEL_OVERVIEW.md) — YOLOv8 architecture, classes, and tensor dimensions.
+- [**Model Architecture & Tensors**](model/MODEL_ARCHITECTURE.md) — Visual YOLOv8 tensor flow and static input/output contracts.
+- [**Model Quantization & Calibration**](model/MODEL_QUANTIZATION.md) — Symmetric INT8 quantization and QNN context binary compilation.
+- [**Numerical Parity Validation**](model/MODEL_VALIDATION.md) — Accuracy parity vs. FP32 golden reference (100% Top-1, 0.912 IoU).
 - [**DFL Coordinate Decoding**](model/DFL_AND_POSTPROCESSING.md) — Vectorized coordinate expectation and unletterbox scaling.
-- [**Numerical Parity Validation**](model/NUMERICAL_VALIDATION.md) — Empirical accuracy parity against FP32 reference (100% Top-1, 0.912 IoU).
+- [**Graph Splitting Rationale**](model/GRAPH_SPLITTING.md) — Resolution of the dynamic DFL slice compiler blocker.
+- [**HTP vs. CPU Execution Boundary**](model/HTP_EXECUTION.md) — Visual boundary separating DSP neural operations from CPU math.
 
 ---
 
 ## 4. Native Runtime & IPC
-- [**Native C++ Worker Daemon**](runtime/NATIVE_RUNTIME.md) — FastRPC context manager and socket listener.
-- [**Binary IPC Protocol**](runtime/IPC_ARCHITECTURE.md) — Binary socket framing specification (`0x4B574158` / `0x5841574B`).
+- [**Qualcomm Hexagon HTP Runtime**](runtime/HTP_RUNTIME.md) — FastRPC transport (`/dev/fastrpc-cdsp`) and zero CPU fallback.
+- [**QNN SDK C API Integration**](runtime/QNN_INTEGRATION.md) — Context deserialization and memory management.
+- [**Native C++ Worker Daemon**](runtime/NATIVE_WORKER.md) — FastRPC context manager and socket listener.
+- [**Binary IPC Protocol**](runtime/IPC_PROTOCOL.md) — Binary socket framing specification (`0x4B574158` / `0x5841574B`).
+- [**Process Lifecycle & State Machine**](runtime/PROCESS_LIFECYCLE.md) — Supervisor state transitions and self-healing.
 
 ---
 
 ## 5. Real-Time Streaming & Ingestion
-- [**Camera Ingestion Architecture**](streaming/CAMERA_ARCHITECTURE.md) — V4L2 USB/CSI, RTSP IP camera, and video file adapters.
+- [**Live Stream Pipeline Architecture**](streaming/LIVE_STREAM_ARCHITECTURE.md) — Dual-threaded live stream coordination.
+- [**Camera Ingestion Architecture**](streaming/CAMERA_ARCHITECTURE.md) — V4L2 USB/CSI, RTSP IP stream, and Video file adapters.
+- [**Frame Queue & Backpressure**](streaming/FRAME_QUEUE_AND_BACKPRESSURE.md) — Bounded queue (`maxsize=2`) and drop-tail policy.
 - [**Complete Frame Lifecycle**](streaming/FRAME_LIFECYCLE.md) — Sequence diagram from camera frame to alert dispatch.
-- [**Bounded Queue & Drop Policy**](streaming/FRAME_QUEUE.md) — Bounded queue (`maxsize=2`) and latest-frame-wins drop policy.
 - [**Alert Event Pipeline**](streaming/EVENT_PIPELINE.md) — Debounced hazard classification and event taxonomy.
-- [**Streaming Pipeline Manual**](streaming/STREAMING_PIPELINE.md) — Dual-threaded live stream coordination.
-- [**Camera Setup Guide**](streaming/CAMERA_INTEGRATION.md) — Hardware camera configuration parameters.
-- [**IPC Protocol Framing**](streaming/IPC_PROTOCOL.md) — Binary framing wire specification.
+- [**Camera Integration Guide**](streaming/CAMERA_INTEGRATION.md) — Hardware camera configuration parameters.
 
 ---
 
 ## 6. Turnkey Deployment & Operations
-- [**Deployment Architecture**](deployment/DEPLOYMENT_ARCHITECTURE.md) — Host-to-target deployment and runtime layout.
 - [**Turnkey Deployment Guide**](deployment/DEPLOYMENT_GUIDE.md) — Installation, permissions (GID 993 render), and initialization.
-- [**Production Configuration**](deployment/PRODUCTION_CONFIGURATION.md) — Centralized runtime reference (`config/production.json`).
-- [**Service Lifecycle & State Machine**](operations/SERVICE_LIFECYCLE.md) — Supervisor state transitions and self-healing.
+- [**Production Configuration Reference**](deployment/CONFIGURATION.md) — Centralized runtime reference (`config/production.json`).
+- [**Go-Live & Commissioning Guide**](deployment/GO_LIVE_GUIDE.md) — Pre-commissioning checklist and verification runbook.
+- [**Deployment Architecture**](deployment/DEPLOYMENT_ARCHITECTURE.md) — Host-to-target deployment flow.
 - [**Production Operations Runbook**](operations/OPERATIONS_RUNBOOK.md) — Standard operating procedures (start, stop, restart, status, logs).
 - [**Health & Monitoring**](operations/HEALTH_AND_MONITORING.md) — JSON health monitoring endpoint (`/tmp/kawach_health.json`).
+- [**Troubleshooting Guide**](operations/TROUBLESHOOTING.md) — Diagnostic checklists and error resolution.
+- [**Incident Recovery Procedures**](operations/INCIDENT_RECOVERY.md) — Automated self-healing and recovery runbooks.
 
 ---
 
 ## 7. Testing, Performance & Security
-- [**Test Architecture**](testing/TEST_ARCHITECTURE.md) — Multi-tier test map across hardware, integration, and streaming.
-- [**Empirical Performance Characterization**](testing/PERFORMANCE.md) — Measured latencies (30.14 ms NPU, 61.91 ms Full Pipeline).
+- [**Test Strategy**](testing/TEST_STRATEGY.md) — Multi-tier test methodology across hardware, integration, and streaming.
+- [**Model Testing**](testing/MODEL_TESTING.md) — Quantization and numerical parity test suites.
+- [**Hardware Testing**](testing/HARDWARE_TESTING.md) — FastRPC DSP execution tests.
+- [**Streaming Testing**](testing/STREAMING_TESTING.md) — Continuous live stream throughput tests.
+- [**Performance Characterization**](testing/PERFORMANCE_TESTING.md) — Measured latencies (30.14 ms NPU, 61.91 ms Full Pipeline).
 - [**Failure Recovery Specification**](testing/FAILURE_RECOVERY.md) — Fault-tolerance matrix and auto-recovery flow.
-- [**Test Strategy**](testing/TEST_STRATEGY.md) — Test methodology and verification principles.
-- [**Testing & Validation Results**](testing/TESTING_AND_VALIDATION.md) — Automated regression test results.
 - [**Security Architecture & Controls**](security/SECURITY_ARCHITECTURE.md) — Resource bounds, isolation, and access controls.
+- [**Model Integrity & Checksum**](security/MODEL_INTEGRITY.md) — SHA256 verification and tamper protection.
 
 ---
 
-## 8. Assignment Traceability & Audits
-- [**Requirements Traceability Matrix**](assignment/REQUIREMENT_TRACEABILITY.md) — Traces every assessment requirement to source code and tests.
-- [**Assignment Coverage Report**](assignment/ASSIGNMENT_COVERAGE.md) — 100% compliance mapping against assessment instructions.
-- [**Evaluator Submission Guide**](assignment/SUBMISSION_GUIDE.md) — Evaluator quickstart runbook.
-- [**Repository Audit**](audit/REPOSITORY_AUDIT.md) — Complete codebase inventory and component mapping.
-- [**Assignment Requirements Audit**](audit/ASSIGNMENT_REQUIREMENTS.md) — Extracted requirements matrix.
-- [**Evidence Matrix**](audit/EVIDENCE_MATRIX.md) — Evidence tracing matrix.
-- [**Claims & Evidence Registry**](audit/CLAIMS_AND_EVIDENCE.md) — Empirical evidence supporting all performance claims.
-- [**Documentation Final Audit**](audit/DOCUMENTATION_FINAL_AUDIT.md) — Consistency and integrity audit report.
+## 8. Development & Handover
+- [**Developer Onboarding Guide**](development/DEVELOPMENT_GUIDE.md) — Local development and build workflow.
+- [**Repository Architecture**](development/REPOSITORY_STRUCTURE.md) — Production, test, tooling, and archive mapping.
+- [**Contributing Guidelines**](development/CONTRIBUTING.md) — Code style and PR workflow.
+- [**Production Handover**](handover/PRODUCTION_HANDOVER.md) — Deployment acceptance and handover specifications.
+- [**Project Operational Status**](handover/PROJECT_STATUS.md) — Operational baseline and hardware verification.
+- [**Technical Assessment Mapping**](handover/TECHNICAL_ASSESSMENT_MAPPING.md) — 100% compliance mapping against assessment instructions.
+- [**Technical Evidence Index**](handover/EVIDENCE_INDEX.md) — Traceability registry connecting claims to empirical hardware evidence.
+- [**Documentation Final Audit**](handover/DOCUMENTATION_AUDIT.md) — Final quality and consistency audit report.

@@ -6,10 +6,11 @@ from .decoder import decode_detections
 from .model import InferenceOutput
 
 class InferenceEngine:
-    def __init__(self, socket_path: str = "/tmp/kawach_worker.sock", conf_threshold: float = 0.25):
+    def __init__(self, socket_path: str = "/tmp/kawach_worker.sock", conf_threshold: float = 0.25, iou_threshold: float = 0.45):
         self.client = IpcClient(socket_path=socket_path)
         self.conf_threshold = conf_threshold
-        self.class_names = ["fire", "smoke", "person"]
+        self.iou_threshold = iou_threshold
+        self.class_names = ["person", "fire", "smoke"]
 
     def connect(self, timeout: float = 3.0) -> bool:
         return self.client.connect(timeout=timeout)
@@ -17,7 +18,16 @@ class InferenceEngine:
     def infer(self, raw_bgr_frame: np.ndarray, req_id: int = 1) -> InferenceOutput:
         uint8_nchw, r, dw, dh = prepare_uint8_nchw(raw_bgr_frame)
         res = self.client.send_inference_request(uint8_nchw, req_id=req_id)
-        dets = decode_detections(res["tensor"], r, dw, dh, self.conf_threshold, self.class_names)
+        dets = decode_detections(
+            res["tensor"],
+            r,
+            dw,
+            dh,
+            conf_thresh=self.conf_threshold,
+            iou_thresh=self.iou_threshold,
+            class_names=self.class_names,
+            orig_shape=raw_bgr_frame.shape[:2]
+        )
         
         return InferenceOutput(
             status=res["status"],
